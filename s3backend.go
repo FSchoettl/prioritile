@@ -81,3 +81,15 @@ func (s *S3Backend) FileExists(filename string) bool {
 		minio.StatObjectOptions{})
 	return err == nil
 }
+
+func (s *S3Backend) DirExists(dirname string) bool {
+	prefix := s.BasePath + dirname
+	for range s.Client.ListObjects(
+		context.Background(),
+		s.Bucket,
+		minio.ListObjectsOptions{Prefix: prefix, Recursive: false},
+	) {
+		return true;
+	}
+	return false
+}

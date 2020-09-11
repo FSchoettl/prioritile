@@ -26,12 +26,17 @@ func (b *FsBackend) GetFile(filename string) ([]byte, error) {
 }
 
 func (b *FsBackend) PutFile(filename string, content *bytes.Buffer) error {
-	return ioutil.WriteFile(b.BasePath+filename, content.Bytes(), 0755)
+	return ioutil.WriteFile(filepath.Join(b.BasePath, filename), content.Bytes(), 0755)
 }
 
 func (b *FsBackend) FileExists(filename string) bool {
-	_, err := os.Stat(b.BasePath + filename)
+	_, err := os.Stat(filepath.Join(b.BasePath, filename))
 	return err == nil
+}
+
+func (b *FsBackend) DirExists(dirname string) bool {
+	_, err := os.Stat(filepath.Join(b.BasePath, dirname))
+	return !os.IsNotExist(err)
 }
 
 func (b *FsBackend) MkdirAll(dirname string) error {

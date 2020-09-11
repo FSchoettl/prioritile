@@ -25,6 +25,7 @@ type StorageBackend interface {
 	GetFile(filename string) ([]byte, error)
 	PutFile(filename string, content *bytes.Buffer) error
 	FileExists(filename string) bool
+	DirExists(filename string) bool
 }
 
 type Job struct {
@@ -86,6 +87,10 @@ func main() {
 	source := sources[0]
 	for z := source.MinZ; z <= source.MaxZ; z++ {
 		zPart := fmt.Sprintf("%d/", z)
+		if !dest.Backend.DirExists(zPart) {
+			log.Printf("Skipping %s", zPart)
+			continue
+		}
 		xDirs, err := source.Backend.GetDirectories(zPart)
 		if err != nil {
 			panic(err)
@@ -101,18 +106,24 @@ func main() {
 				panic(err)
 			}
 			xPart := fmt.Sprintf("%s%d/", zPart, xNum)
+			if !dest.Backend.DirExists(xPart) {
+				log.Printf("Skipping %s", xPart)
+				continue
+			}
 			yFiles, err := source.Backend.GetFiles(xPart)
 			if err != nil {
 				panic(err)
 			}
 			for _, y := range yFiles {
-				if err := dest.Backend.MkdirAll(xPart); err != nil {
-					log.Fatal(err)
+				relTilePath := xPart + y
+				if !dest.Backend.DirExists(relTilePath) {
+					log.Printf("Skipping %s", relTilePath)
+					continue
 				}
 				jobChan <- Job{
 					source:      source,
 					dest:        dest,
-					relTilePath: xPart + y,
+					relTilePath: relTilePath,
 				}
 			}
 			if !*quiet {
@@ -170,12 +181,13 @@ func processInputTile(source, dest TilesetDescriptor, relTilePath string) error 
 	return nil
 }
 
+
 func newS3Backend(path string) (*S3Backend, error) {
 	pathComponents := strings.Split(path[5:], "/")
 
 	minioClient, err := minio.New(pathComponents[0], &minio.Options{
 		Creds:  credentials.NewStaticV4(os.Getenv("AWS_ACCESS_KEY_ID"), os.Getenv("AWS_SECRET_ACCESS_KEY"), ""),
-		Secure: true,
+		Secure: false,
 	})
 
 	if err != nil {
