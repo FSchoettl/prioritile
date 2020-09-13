@@ -47,7 +47,11 @@ func discoverTileset(backend StorageBackend) (TilesetDescriptor, error) {
 		z = append(z, i)
 	}
 	if z == nil {
-		return TilesetDescriptor{}, fmt.Errorf("invalid or empty tileset")
+		return TilesetDescriptor{
+			MinZ: 0,
+			MaxZ: 0,
+			Backend: backend,
+		}, nil
 	}
 	sort.Ints(z)
 

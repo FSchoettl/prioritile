@@ -40,7 +40,7 @@ func (b *FsBackend) DirExists(dirname string) bool {
 }
 
 func (b *FsBackend) MkdirAll(dirname string) error {
-	return os.MkdirAll(b.BasePath+dirname, 0755)
+	return os.MkdirAll(filepath.Join(b.BasePath, dirname), 0755)
 }
 
 func (b *FsBackend) GetDirectories(dirname string) ([]string, error) {

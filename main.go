@@ -84,12 +84,20 @@ func main() {
 		}(jobChan)
 	}
 
+	minZ := 0
+	maxZ := 14
 	source := sources[0]
-	for z := source.MinZ; z <= source.MaxZ; z++ {
+	for z := minZ; z <= maxZ; z++ {
 		zPart := fmt.Sprintf("%d/", z)
-		if !dest.Backend.DirExists(zPart) {
-			log.Printf("Skipping %s", zPart)
+		if !source.Backend.DirExists(zPart) {
 			continue
+		}
+
+		if !dest.Backend.DirExists(zPart) {
+			if !*quiet {
+				log.Printf("Creating %s", zPart)
+			}
+			dest.Backend.MkdirAll(zPart)
 		}
 		xDirs, err := source.Backend.GetDirectories(zPart)
 		if err != nil {
@@ -107,8 +115,10 @@ func main() {
 			}
 			xPart := fmt.Sprintf("%s%d/", zPart, xNum)
 			if !dest.Backend.DirExists(xPart) {
-				log.Printf("Skipping %s", xPart)
-				continue
+				if !*quiet {
+					log.Printf("Creating %s", xPart)
+				}
+				dest.Backend.MkdirAll(xPart)
 			}
 			yFiles, err := source.Backend.GetFiles(xPart)
 			if err != nil {
@@ -116,10 +126,6 @@ func main() {
 			}
 			for _, y := range yFiles {
 				relTilePath := xPart + y
-				if !dest.Backend.DirExists(relTilePath) {
-					log.Printf("Skipping %s", relTilePath)
-					continue
-				}
 				jobChan <- Job{
 					source:      source,
 					dest:        dest,
