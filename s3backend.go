@@ -28,8 +28,9 @@ func (s *S3Backend) GetFile(filename string) ([]byte, error) {
 }
 
 func (s *S3Backend) PutFile(filename string, content *bytes.Buffer) error {
+	userMetaData := map[string]string{"x-amz-acl": "public-read"}
 	_, err := s.Client.PutObject(context.Background(), s.Bucket, s.BasePath+filename, content, int64(content.Len()),
-		minio.PutObjectOptions{})
+		minio.PutObjectOptions{UserMetadata: userMetaData})
 	return err
 }
 
