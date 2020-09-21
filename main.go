@@ -37,6 +37,8 @@ type Job struct {
 func main() {
 	numWorkers := flag.Int("parallel", 1, "Number of parallel threads to use for processing")
 	quiet := flag.Bool("quiet", false, "Don't output progress information")
+	minZ := flag.Int("minZ", -1, "Min zoom level")
+	maxZ := flag.Int("maxZ", -1, "Max zoom level")
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "Usage: prioritile [-parallel=4] /tiles/target/ /tiles/source1/ [/tiles/source2/ [...]]")
 		fmt.Fprintln(os.Stderr, "")
@@ -84,10 +86,15 @@ func main() {
 		}(jobChan)
 	}
 
-	minZ := 0
-	maxZ := 14
 	source := sources[0]
-	for z := minZ; z <= maxZ; z++ {
+	if (*minZ == -1) {
+		*minZ = source.MinZ
+	}
+	if (*maxZ == -1) {
+		*maxZ = source.MaxZ
+	}
+
+	for z := *minZ; z <= *maxZ; z++ {
 		zPart := fmt.Sprintf("%d/", z)
 		if !source.Backend.DirExists(zPart) {
 			continue
